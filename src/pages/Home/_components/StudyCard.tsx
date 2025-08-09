@@ -1,23 +1,23 @@
 import ArrowBlue from "../../../assets/images/ArrowBlue.svg?react";
 
-type StudyType = "picture" | "word" | "sentence";
+type StudyType = "그림" | "단어" | "문장";
 
 interface StudyCardProps {
   type: StudyType;
 }
 
 const STUDY_CONTENT = {
-  picture: {
+  그림: {
     title: "그림 말하기",
     description: "그림을 보고 소리내어 발음해보세요",
     count: "10가지 그림",
   },
-  word: {
+  단어: {
     title: "단어 말하기",
     description: "기초 단어부터 정확하게 발음해보세요",
     count: "10가지 단어",
   },
-  sentence: {
+  문장: {
     title: "문장 말하기",
     description: "일상 속 문장을 자신감 있게 발음해보세요",
     count: "10가지 문장",

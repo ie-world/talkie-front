@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Footer from "../../components/Footer/Footer";
 import Header from "../../components/Header/Header";
 import TabBar from "../../components/TabBar/TabBar";
@@ -5,9 +6,31 @@ import AiPracticeCard from "./_components/AiPracticeCard";
 import StudyCard from "./_components/StudyCard";
 import UserOverview from "./_components/UserOverview";
 
+const types = ["단어", "문장", "그림"] as const;
+
 const HomePage = () => {
+  // AiPracticeCard progress 상태 (예시: 75로 설정해놓음)
+  // 실제 progress를 props 또는 상태로 받아올 수도 있음
+  const [aiProgress] = useState(75);
+
+  const [studyTypes, setStudyTypes] = useState<Array<(typeof types)[number]>>(
+    []
+  );
+
+  useEffect(() => {
+    if (aiProgress === 0) {
+      const studyCandidates = types.filter((t) => t !== "단어");
+      const shuffled = studyCandidates.sort(() => Math.random() - 0.5);
+      setStudyTypes(shuffled.slice(0, 2));
+    } else {
+      const studyCandidates = types.filter((t) => t !== "단어");
+      const shuffled = studyCandidates.sort(() => Math.random() - 0.5);
+      setStudyTypes(shuffled.slice(0, 2));
+    }
+  }, [aiProgress]);
+
   return (
-    <div className="flex flex-col pb-45 overflow-auto no-scrollbar">
+    <div className="flex flex-col pb-45 overflow-auto no-scrollbar px-[1rem]">
       <Header />
       <Footer />
       <TabBar />
@@ -24,13 +47,14 @@ const HomePage = () => {
       </div>
       <UserOverview />
       <AiPracticeCard
-        type="그림"
-        progress={75}
+        type="단어"
+        progress={aiProgress}
         buttonText="시작하기"
         onClick={() => console.log("AI Practice started")}
       />
-      <StudyCard type="word" />
-      <StudyCard type="word" />
+      {studyTypes.map((type) => (
+        <StudyCard key={type} type={type} />
+      ))}
     </div>
   );
 };
