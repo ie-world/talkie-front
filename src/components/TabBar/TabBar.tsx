@@ -56,7 +56,12 @@ export default function TabBar() {
             <TalkdyBubble className="w-28 h-auto" />
           </div>
           {/* 챗봇 버튼 */}
-          <ChatbotButton className="w-[6rem] h-[6rem]" />
+          <div
+            className="w-[6rem] h-[6rem] cursor-pointer"
+            onClick={() => navigate("/freechat")}
+          >
+            <ChatbotButton className="w-full h-full" />
+          </div>
         </div>
       </div>
     </div>

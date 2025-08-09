@@ -13,17 +13,21 @@ const UserBubble: React.FC<UserBubbleProps> = ({ text, audioUrl }) => {
   };
 
   return (
-    <div className="max-w-[70%] bg-blue-500 text-white p-3 rounded-lg mb-2 self-end">
-      <p>{text}</p>
+    <div className="flex flex-col items-end">
+      <div className="max-w-[70%] bg-[#1A75FF] rounded-br-none text-white py-3 px-4 rounded-3xl mb-2 self-end">
+        <p>{text}</p>
+      </div>
       {audioUrl && (
-        <button
-          onClick={handlePlay}
-          className="mt-2 bg-blue-700 px-3 py-1 rounded text-sm"
-        >
-          듣기 ▶
-        </button>
+        <>
+          <button
+            onClick={handlePlay}
+            className="bg-[#EAF2FE] text-[#1A75FF] px-3 py-1 rounded text-sm"
+          >
+            듣기 ▶
+          </button>
+          <audio ref={audioRef} src={audioUrl} />
+        </>
       )}
-      {audioUrl && <audio ref={audioRef} src={audioUrl} />}
     </div>
   );
 };
