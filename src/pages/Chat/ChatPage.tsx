@@ -1,114 +1,108 @@
-import { useRef, useState } from "react";
-import TodyBubble from "./_components/TodyBubble";
-import MicOff from "./_components/MicOff";
-import MicOn from "./_components/MicOn";
-
+import { useEffect, useMemo, useState } from "react";
 import TopBar from "./_components/Topbar";
-import UserBubble from "./_components/UserBubble";
+import TodyBubble from "./_components/TodyBubble"; // 챗봇 버블 컴포넌트
+import UserBubble from "./_components/UserBubble"; // 유저 버블 컴포넌트
+import { RecorderControls } from "./_components/RecorderControls";
+import { useLearningAPI } from "../../hooks/useLearningAPI";
+import { useSpeechRecorder } from "../../hooks/useSpeechRecorder";
 
-const ChatPage = () => {
-  const [isListening, setIsListening] = useState(false);
-  const [userText, setUserText] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+type LearningType = "picture" | "word" | "sentence";
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
+interface Message {
+  id: string;
+  type: "chatbot" | "user";
+  text: string;
+  imageUrl?: string;
+  audioUrl?: string;
+}
 
-  // 음성 → 텍스트 변환 함수 (예: Google Speech-to-Text API 사용한다고 가정)
-  // 여기서는 fetch 호출로 예시
-  const convertSpeechToText = async (blob: Blob): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", blob, "voiceMessage.webm");
+export default function ChatPage() {
+  const [learningType] = useState<LearningType>("picture");
 
-    try {
-      const response = await fetch("/api/speech-to-text", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("음성 변환 실패");
-      const data = await response.json();
-      return data.text || "";
-    } catch (error) {
-      console.error("음성 변환 에러:", error);
-      return "";
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "init",
+      type: "chatbot",
+      text: "로딩 중...",
+    },
+  ]);
+
+  const firstMessageTexts = useMemo(
+    () => ({
+      picture:
+        "안녕하세요, 저는 언어학습을 도와줄 토디입니다.\n\n지금부터 나오는 그림을 보고 발음해보세요.",
+      word: "안녕하세요, 저는 언어학습을 도와줄 토디입니다.\n\n지금부터 나오는 단어를 보고 발음해보세요.",
+      sentence:
+        "안녕하세요, 저는 언어학습을 도와줄 토디입니다.\n\n지금부터 나오는 문장을 보고 발음해보세요.",
+    }),
+    []
+  );
+
+  const { fetchLearningStart, fetchLearningNext } =
+    useLearningAPI(firstMessageTexts);
+
+  const { isListening, startRecording, stopRecording } = useSpeechRecorder(
+    async (text, url) => {
+      // 유저 메시지 추가
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          type: "user",
+          text,
+          audioUrl: url,
+        },
+      ]);
+
+      // 챗봇 다음 메시지 받아서 추가
+      const nextContent = await fetchLearningNext(learningType, text);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          type: "chatbot",
+          ...nextContent,
+        },
+      ]);
     }
-  };
+  );
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-
-        // 변환해서 텍스트 상태에 저장
-        const text = await convertSpeechToText(blob);
-        setUserText(text);
-
-        // 재생을 위한 URL 생성
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-      };
-
-      mediaRecorder.start();
-      setIsListening(true);
-    } catch (error) {
-      console.error("마이크 접근 실패:", error);
+  useEffect(() => {
+    async function fetchStart() {
+      const startContent = await fetchLearningStart(learningType);
+      setMessages([
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          type: "chatbot",
+          ...startContent,
+        },
+      ]);
     }
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsListening(false);
-  };
-
-  const handleMicClick = () => {
-    startRecording();
-  };
-
-  const handleStopClick = () => {
-    stopRecording();
-  };
-
-  const handleSendClick = () => {
-    stopRecording();
-  };
+    fetchStart();
+  }, [learningType, fetchLearningStart]);
 
   return (
     <div className="flex flex-col w-full h-screen bg-[#F5F8FF] py-6 px-[1rem]">
       <TopBar />
-      <TodyBubble />
-
-      {/* 사용자 말풍선 */}
-      {userText && (
-        <UserBubble text={userText} audioUrl={audioUrl || undefined} />
-      )}
-
-      {/* 녹음된 음성 재생 확인용 */}
-      {audioUrl && (
-        <div className="mt-4 text-center">
-          <audio controls src={audioUrl} />
-        </div>
-      )}
-
-      <div className="text-center mt-auto">
-        {!isListening ? (
-          <button onClick={handleMicClick}>
-            <MicOff />
-          </button>
-        ) : (
-          <MicOn onStopClick={handleStopClick} onSendClick={handleSendClick} />
+      <div className="flex-grow overflow-y-auto px-2 space-y-3">
+        {messages.map((msg) =>
+          msg.type === "chatbot" ? (
+            <TodyBubble
+              type={learningType}
+              key={msg.id}
+              text={msg.text}
+              imageUrl={msg.imageUrl}
+            />
+          ) : (
+            <UserBubble key={msg.id} text={msg.text} audioUrl={msg.audioUrl} />
+          )
         )}
       </div>
+      <RecorderControls
+        isListening={isListening}
+        onStart={startRecording}
+        onStop={stopRecording}
+      />
     </div>
   );
-};
-
-export default ChatPage;
+}

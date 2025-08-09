@@ -6,28 +6,43 @@ import AiPracticeCard from "./_components/AiPracticeCard";
 import StudyCard from "./_components/StudyCard";
 import UserOverview from "./_components/UserOverview";
 
-const types = ["단어", "문장", "그림"] as const;
+type Stage = "word" | "sentence" | "image";
+
+// 타입만 별도로 선언
+type TypeText = "단어" | "문장" | "그림";
+
+const stageToTypeMap: Record<Stage, TypeText> = {
+  word: "단어",
+  sentence: "문장",
+  image: "그림",
+};
+
+type RecommendedData = {
+  stage: Stage;
+  progressRatio: number;
+};
 
 const HomePage = () => {
-  // AiPracticeCard progress 상태 (예시: 75로 설정해놓음)
-  // 실제 progress를 props 또는 상태로 받아올 수도 있음
-  const [aiProgress] = useState(75);
-
-  const [studyTypes, setStudyTypes] = useState<Array<(typeof types)[number]>>(
-    []
-  );
+  const [recommended, setRecommended] = useState<RecommendedData | null>(null);
+  const [alternatives, setAlternatives] = useState<Stage[]>([]);
 
   useEffect(() => {
-    if (aiProgress === 0) {
-      const studyCandidates = types.filter((t) => t !== "단어");
-      const shuffled = studyCandidates.sort(() => Math.random() - 0.5);
-      setStudyTypes(shuffled.slice(0, 2));
-    } else {
-      const studyCandidates = types.filter((t) => t !== "단어");
-      const shuffled = studyCandidates.sort(() => Math.random() - 0.5);
-      setStudyTypes(shuffled.slice(0, 2));
-    }
-  }, [aiProgress]);
+    fetch("/api/learn/recommend")
+      .then((res) => res.json())
+      .then((data) => {
+        setRecommended({
+          stage: data.recommended.stage,
+          progressRatio: data.recommended.progressRatio,
+        });
+        const altStages = data.alternatives.map(
+          (alt: { stage: Stage }) => alt.stage
+        );
+        setAlternatives(altStages);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch recommendation:", err);
+      });
+  }, []);
 
   return (
     <div className="flex flex-col pb-45 overflow-auto no-scrollbar px-[1rem]">
@@ -46,14 +61,18 @@ const HomePage = () => {
         오늘도 한 걸음, 말하기 연습 해봐요!
       </div>
       <UserOverview />
-      <AiPracticeCard
-        type="단어"
-        progress={aiProgress}
-        buttonText="시작하기"
-        onClick={() => console.log("AI Practice started")}
-      />
-      {studyTypes.map((type) => (
-        <StudyCard key={type} type={type} />
+
+      {recommended && (
+        <AiPracticeCard
+          type={stageToTypeMap[recommended.stage]}
+          progress={Math.round((recommended.progressRatio ?? 0) * 100)}
+          buttonText="시작하기"
+          onClick={() => console.log("AI Practice started")}
+        />
+      )}
+
+      {alternatives.map((stage) => (
+        <StudyCard key={stage} type={stageToTypeMap[stage]} />
       ))}
     </div>
   );

@@ -4,6 +4,8 @@ import Eye from "../../assets/images/Eye.svg?react";
 import EyeOff from "../../assets/images/EyeOff.svg?react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axiosInstance from "../../apis/axios";
+import Storage from "../../utils/storage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -11,53 +13,48 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // 에러 상태 추가
   const [idError, setIdError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // (예시) 실제 로그인 로직 대신 더미 아이디, 비밀번호 조건 사용
-  const dummyId = "testuser";
-  const dummyPassword = "1234";
+  const handleLogin = async () => {
+    // 에러 초기화
+    setIdError("");
+    setPasswordError("");
 
-  const handleLogin = () => {
     let hasError = false;
 
-    // 아이디 검증
     if (id.trim() === "") {
       setIdError("아이디를 입력해주세요.");
       hasError = true;
-    } else if (id !== dummyId) {
-      setIdError("아이디를 찾을 수 없습니다.");
+    }
+    if (password.trim() === "") {
+      setPasswordError("비밀번호를 입력해주세요.");
       hasError = true;
-    } else {
-      setIdError("");
     }
 
-    // 비밀번호 검증 (아이디가 맞을 때만 비밀번호 체크)
-    if (!hasError) {
-      if (password.trim() === "") {
-        setPasswordError("비밀번호를 입력해주세요.");
-        hasError = true;
-      } else if (password !== dummyPassword) {
-        setPasswordError("비밀번호를 다시 확인해주세요.");
-        hasError = true;
+    if (hasError) return;
+
+    try {
+      const response = await axiosInstance.post("/api/auth/login", {
+        username: id,
+        password: password,
+      });
+
+      const token = response.data.token;
+      if (token) {
+        Storage.setAccessToken(token);
+        alert("로그인 성공!");
+        navigate("/home");
       } else {
-        setPasswordError("");
+        alert("로그인에 실패했습니다. 토큰이 없습니다.");
       }
-    } else {
-      setPasswordError("");
-    }
-
-    // 오류 없으면 로그인 처리 (여기서는 단순히 alert)
-    if (!hasError) {
-      alert("로그인 성공!");
-      navigate("/home");
+    } catch (error) {
+      console.log("로그인 실패:", error);
     }
   };
 
   return (
     <div className="flex flex-col w-full py-20 px-4 max-w-md mx-auto">
-      {/* 로고 */}
       <div className="flex flex-col justify-center items-center gap-4 mb-10">
         <TalkieIcon className="w-[8.875rem] h-[3.25rem]" />
         <span className="text-[#242628] text-xl font-semibold">
@@ -65,7 +62,6 @@ const LoginPage = () => {
         </span>
       </div>
 
-      {/* 아이디 입력 */}
       <div className="mb-1">
         <label className="text-[1rem] font-medium text-[#56585A]">아이디</label>
         <KeyInput
@@ -76,7 +72,6 @@ const LoginPage = () => {
         {idError && <p className="text-red-600 text-sm mt-1">{idError}</p>}
       </div>
 
-      {/* 비밀번호 입력 */}
       <label className="mb-1 text-[1rem] font-medium text-[#56585A]">
         비밀번호
       </label>
@@ -103,7 +98,6 @@ const LoginPage = () => {
         <p className="text-red-600 text-sm mb-6">{passwordError}</p>
       )}
 
-      {/* 로그인 버튼 */}
       <button
         onClick={handleLogin}
         className="w-full bg-[#1A75FF] text-white py-3 rounded-xl mb-4 mt-12 font-semibold"
