@@ -1,15 +1,19 @@
 import TalkieIcon from "../../assets/images/TalkieIcon.svg?react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import KeyInput from "../../components/Input/KeyInput";
 import Eye from "../../assets/images/Eye.svg?react";
 import EyeOff from "../../assets/images/EyeOff.svg?react";
+import ArrowGrey from "../../assets/images/ArrowGrey.svg?react";
 
 const SigninPage = () => {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [checked1, setChecked1] = useState(false);
+  const [checked2, setChecked2] = useState(false);
 
-  // 예시: 이미 사용 중인 아이디 목록
+  // 이미 사용 중인 아이디 예시
   const usedIds = ["test123", "user01"];
 
   // 아이디 유효성 검사
@@ -25,6 +29,13 @@ const SigninPage = () => {
     const count = [hasLetter, hasNumber, hasSpecial].filter(Boolean).length;
     return count >= 2;
   })();
+
+  // 버튼 활성화 조건
+  const canSubmit =
+    idValid && !isIdUsed && passwordValid && checked1 && checked2;
+
+  // 페이지 이동 훅
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col w-full py-20 px-4 max-w-md mx-auto">
@@ -55,7 +66,6 @@ const SigninPage = () => {
           onChange={(e) => setId(e.target.value)}
           hasError={id !== "" && (!idValid || isIdUsed)}
         />
-        {/* 경고 / 성공 메시지 */}
         {id && !idValid && (
           <p className="text-xs text-red-500 mt-1">
             영문과 숫자를 포함해 4~15자로 입력해주세요.
@@ -98,7 +108,6 @@ const SigninPage = () => {
           )}
         </button>
       </div>
-      {/* 경고 / 성공 메시지 */}
       {password && !passwordValid && (
         <p className="text-xs text-red-500 mb-6">
           영문, 숫자, 특수문자 중 2가지 이상 조합 8~15자로 입력해주세요.
@@ -107,6 +116,72 @@ const SigninPage = () => {
       {password && passwordValid && (
         <p className="text-xs text-[#1A75FF] mb-6">사용 가능합니다.</p>
       )}
+
+      {/* 체크박스 2개 */}
+      <div className="flex flex-col gap-4 mb-6 mt-6">
+        <label className="flex items-center gap-2 text-sm text-[#56585A] select-none cursor-pointer">
+          <input
+            type="checkbox"
+            checked={checked1}
+            onChange={() => setChecked1((prev) => !prev)}
+            className="w-4 h-4"
+          />
+          <span>(필수) 이용약관 동의</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation(); // 체크박스 라벨 클릭 이벤트 방해 방지
+              window.open(
+                "https://www.notion.so/2499e4b6a8bf8061a485d9e56b71c348",
+                "_blank"
+              );
+            }}
+            className="ml-auto"
+            aria-label="서비스 이용약관 링크 열기"
+          >
+            <ArrowGrey className="w-4 h-4 cursor-pointer hover:text-[#1A75FF]" />
+          </button>
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-[#56585A] select-none cursor-pointer">
+          <input
+            type="checkbox"
+            checked={checked2}
+            onChange={() => setChecked2((prev) => !prev)}
+            className="w-4 h-4"
+          />
+          <span>(필수) 개인정보 수집 및 이용 동의</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(
+                "https://www.notion.so/2499e4b6a8bf80fa8192e573f3c3633a",
+                "_blank"
+              );
+            }}
+            className="ml-auto"
+            aria-label="개인정보 처리방침 링크 열기"
+          >
+            <ArrowGrey className="w-4 h-4 cursor-pointer hover:text-[#1A75FF]" />
+          </button>
+        </label>
+      </div>
+      {/* 회원가입 버튼 */}
+      <button
+        onClick={() => {
+          if (canSubmit) {
+            alert("회원가입 완료!");
+            navigate("/login"); // 로그인 페이지로 이동
+          }
+        }}
+        disabled={!canSubmit}
+        className={`w-full py-3 rounded-xl mb-4 mt-12 font-semibold text-white ${
+          canSubmit ? "bg-[#1A75FF]" : "bg-[#A1A3A5] cursor-not-allowed"
+        }`}
+      >
+        회원가입
+      </button>
     </div>
   );
 };
