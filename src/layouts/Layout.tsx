@@ -9,7 +9,7 @@ const Layout = () => {
         xl - 1280px 이상
         2xl - 1536px 이상
       */}
-      <div className="w-full sm:max-w-[393px] min-h-screen bg-white relative flex flex-col px-[1rem] outline-[0.5px] outline-[#E0E0E0] no-scrollbar">
+      <div className="w-full sm:max-w-[393px] min-h-screen relative flex flex-col outline-[0.5px] outline-[#E0E0E0] no-scrollbar">
         <Outlet />
       </div>
     </div>
