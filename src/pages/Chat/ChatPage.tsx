@@ -8,7 +8,6 @@ import UserBubble from "./_components/UserBubble";
 
 const ChatPage = () => {
   const [isListening, setIsListening] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [userText, setUserText] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -48,7 +47,6 @@ const ChatPage = () => {
 
       mediaRecorder.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        setAudioBlob(blob);
 
         // 변환해서 텍스트 상태에 저장
         const text = await convertSpeechToText(blob);

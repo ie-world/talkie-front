@@ -1,23 +1,5 @@
 {
-  "/Chat/ChatPage": "pages/Chat/ChatPage.js",
-  "/Chat/_components/MicOn": "pages/Chat/_components/MicOn.js",
-  "/Chat/_components/TodyBubble": "pages/Chat/_components/TodyBubble.js",
-  "/Chat/_components/Topbar": "pages/Chat/_components/Topbar.js",
-  "/Chat/_components/UserBubble": "pages/Chat/_components/UserBubble.js",
-  "/Chat/_components/MicOff": "pages/Chat/_components/MicOff.js",
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
-  "/Home/_components/StudyCard": "pages/Home/_components/StudyCard.js",
-  "/Home": "pages/Home.js",
-  "/My/_components/PolicyList": "pages/My/_components/PolicyList.js",
-  "/Login": "pages/Login.js",
-  "/Home/_components/AiPracticeCard": "pages/Home/_components/AiPracticeCard.js",
-  "/Home/_components/UserOverview": "pages/Home/_components/UserOverview.js",
-  "/My/_components/Popup": "pages/My/_components/Popup.js",
-  "/LoadingPage": "pages/LoadingPage.js",
-  "/My": "pages/My.js",
-  "/My/_components/ExitButton": "pages/My/_components/ExitButton.js",
-  "/My/_components/UserOverview": "pages/My/_components/UserOverview.js",
-  "/Signin": "pages/Signin.js",
   "/_document": "pages/_document.js"
 }
