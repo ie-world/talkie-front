@@ -4,6 +4,16 @@ import PictureBubble from "../../../assets/images/PictureBubble.svg?react";
 import WordBubble from "../../../assets/images/WordBubble.svg?react";
 import SentenceBubble from "../../../assets/images/SentenceBubble.svg?react";
 import AIProfile from "../../../assets/images/AIProfile.svg?react";
+import { useNavigate } from "react-router-dom";
+
+const typeMap: Record<
+  "그림" | "단어" | "문장",
+  "picture" | "word" | "sentence"
+> = {
+  그림: "picture",
+  단어: "word",
+  문장: "sentence",
+};
 
 interface AiPracticeCardProps {
   type: "그림" | "단어" | "문장";
@@ -16,8 +26,12 @@ const AiPracticeCard: React.FC<AiPracticeCardProps> = ({
   type,
   progress,
   buttonText,
-  onClick,
 }) => {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    // ChatPage로 이동하면서 type 매핑
+    navigate(`/chat/${typeMap[type]}`);
+  };
   // type에 따른 버블, 메인 이미지 선택
   const renderBubble = () => {
     if (type === "그림") return <PictureBubble />;
@@ -64,7 +78,7 @@ const AiPracticeCard: React.FC<AiPracticeCardProps> = ({
 
       <div className="px-[4.469rem] mt-3">
         <button
-          onClick={onClick}
+          onClick={handleClick}
           className="flex justify-center items-center w-full bg-[#1A75FF] text-white font-light py-2 px-4 rounded-xl"
         >
           {buttonText}

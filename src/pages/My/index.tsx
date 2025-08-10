@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../apis/axios"; // axios 인스턴스 경로 맞게
 import Header from "../../components/Header/Header";
 import TabBar from "../../components/TabBar/TabBar";
 import SquareProfile from "../../assets/images/SquareProfile.svg?react";
@@ -13,46 +12,26 @@ import Popup from "./_components/Popup";
 
 const MyPage = () => {
   const [showPopup, setShowPopup] = useState(false);
-  const [username, setUsername] = useState<string>(""); // username 상태
+  const [username, setUsername] = useState<string>("");
   const navigate = useNavigate();
 
-  // API에서 username 받아오기
+  // 목데이터 로드
   useEffect(() => {
-    async function fetchUserProfile() {
-      try {
-        const response = await axiosInstance.get<{ username: string }>(
-          "/api/user/profile"
-        );
-        setUsername(response.data.username);
-      } catch (error) {
-        console.error("프로필 불러오기 실패:", error);
-      }
-    }
-    fetchUserProfile();
+    setTimeout(() => {
+      setUsername("이현서");
+    }, 300);
   }, []);
 
-  const handleConfirm = async () => {
-    try {
-      await axiosInstance.delete("/api/auth/me");
-      alert("탈퇴가 완료되었습니다.");
-      setShowPopup(false);
-      localStorage.removeItem("authToken");
-      navigate("/login");
-    } catch (error) {
-      console.error("회원탈퇴 실패:", error);
-      alert("회원탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.");
-    }
+  const handleConfirm = () => {
+    alert("탈퇴가 완료되었습니다.");
+    setShowPopup(false);
+    localStorage.removeItem("authToken");
+    navigate("/login");
   };
 
-  const handleLogout = async () => {
-    try {
-      await axiosInstance.post("/api/auth/logout");
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-    } finally {
-      localStorage.removeItem("authToken");
-      navigate("/login");
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    navigate("/login");
   };
 
   return (

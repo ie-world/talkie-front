@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import IdInput from "./_components/IdInput";
 import PasswordInput from "./_components/PasswordInput";
 import AgreementCheckboxes from "./_components/AgreementCheckboxes";
-import axiosInstance from "../../apis/axios";
 
 const SigninPage = () => {
   const [id, setId] = useState("");
@@ -29,22 +28,9 @@ const SigninPage = () => {
 
   const navigate = useNavigate();
 
-  const handleSignup = async () => {
+  const handleSignup = () => {
     if (!canSubmit) return;
-
-    try {
-      const response = await axiosInstance.post("/api/auth/signup", {
-        username: id,
-        password: password,
-      });
-
-      if (response.status === 201) {
-        alert(response.data.message || "회원가입 완료!");
-        navigate("/login");
-      }
-    } catch (error) {
-      console.log("회원가입 실패:", error);
-    }
+    navigate("/login");
   };
 
   return (

@@ -1,30 +1,19 @@
-import axiosInstance from "../../../apis/axios";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface StudySummary {
   attendanceDays: number;
-  todayStudyMinutes: number; // API에서 받은 오늘 학습 시간 (분)
-  totalStudyMinutes: number; // API에서 받은 총 학습 시간 (분)
+  todayStudyMinutes: number; // 오늘 학습 시간 (분)
+  totalStudyMinutes: number; // 총 학습 시간 (분)
 }
 
 const UserOverview = () => {
+  const location = useLocation(); // 현재 경로 가져오기
   const [summary, setSummary] = useState<StudySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [todaySeconds, setTodaySeconds] = useState(0);
-
-  // 오늘 학습 종료 시 서버에 오늘 학습 시간 전송하는 함수
-  const sendTodayStudyTimeToServer = async (seconds: number) => {
-    try {
-      // 분 단위로 변환
-      const minutes = Math.floor(seconds / 60);
-      await axiosInstance.post("/api/study-log/today", { minutes });
-      console.log("오늘 학습 시간 서버 전송 성공");
-    } catch (err) {
-      console.error("오늘 학습 시간 서버 전송 실패", err);
-    }
-  };
 
   const formatSecondsToHHMMSS = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -35,50 +24,44 @@ const UserOverview = () => {
       .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  // 가상 데이터 로드
   useEffect(() => {
-    axiosInstance
-      .get<StudySummary>("/api/study-log/summary")
-      .then((res) => {
-        setSummary(res.data);
-        setTodaySeconds(res.data.todayStudyMinutes * 60);
+    setTimeout(() => {
+      try {
+        const fakeData: StudySummary = {
+          attendanceDays: 15,
+          todayStudyMinutes: 20, // 20분
+          totalStudyMinutes: 450, // 7시간 30분
+        };
+        setSummary(fakeData);
+        setTodaySeconds(fakeData.todayStudyMinutes * 60);
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message || "알 수 없는 오류가 발생했습니다.");
+      } catch (err) {
+        console.log("가상 데이터 로드 실패:", err);
+        setError("가상 데이터 로드 실패");
         setLoading(false);
-      });
+      }
+    }, 500);
   }, []);
 
-  // 1초마다 todaySeconds 증가
+  // 1초마다 todaySeconds 증가 (특정 페이지에서만)
   useEffect(() => {
-    if (summary) {
+    if (
+      summary &&
+      (location.pathname === "/chat" || location.pathname === "/freechat")
+    ) {
       const interval = setInterval(() => {
         setTodaySeconds((prev) => prev + 1);
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [summary]);
-
-  // 페이지 떠날 때 오늘 학습 시간 서버에 저장 (예시: window unload 이벤트)
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      sendTodayStudyTimeToServer(todaySeconds);
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // 컴포넌트 언마운트시에도 한번 저장
-      sendTodayStudyTimeToServer(todaySeconds);
-    };
-  }, [todaySeconds]);
+  }, [summary, location.pathname]);
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>에러 발생: {error}</div>;
   if (!summary) return null;
 
-  // 총 학습 시간 = API로 받은 기존 총 학습 시간 + 지금 프론트에서 실시간 누적 중인 오늘 학습 시간
-  // 단, todaySeconds는 초, totalStudyMinutes는 분 → 초로 맞춰서 계산
+  // 총 학습 시간 계산
   const totalSeconds =
     summary.totalStudyMinutes * 60 +
     todaySeconds -
