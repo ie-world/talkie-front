@@ -2,7 +2,7 @@ import { useState } from "react";
 import TopBar from "./_components/Topbar";
 import FreeTodyBubble from "./_components/FreeTodyBubble";
 import UserBubble from "./_components/UserBubble";
-import axiosInstance from "../../apis/axios";
+import { RecorderControls } from "./_components/RecorderControls";
 
 interface Message {
   id: string;
@@ -15,6 +15,53 @@ interface Topic {
   id: number;
   content: string;
 }
+
+// 목데이터 정의
+const MOCK_TOPICS = {
+  subject: [
+    { id: 1, content: "음식" },
+    { id: 2, content: "운동" },
+    { id: 3, content: "음악" },
+    { id: 4, content: "여행" },
+    { id: 5, content: "날씨" },
+    { id: 6, content: "동물" },
+    { id: 7, content: "영화/드라마" },
+    { id: 8, content: "책" },
+  ],
+  situation: [
+    { id: 10, content: "음식 주문하기" },
+    { id: 11, content: "회의하기" },
+    { id: 12, content: "대중교통 이용하기" },
+    { id: 13, content: "물건사기" },
+    { id: 14, content: "병원 예약 및 증상 말하기" },
+  ],
+};
+
+// 토픽별 인사말
+const GREETING_BY_TOPIC: Record<number, string> = {
+  1: "어떤 음식을 좋아하세요?",
+  2: "운동 이야기를 시작해요!",
+  3: "좋아하는 음악에 대해 얘기해요!",
+  4: "여행 이야기를 시작해요!",
+  5: "날씨에 대해 얘기해요!",
+  6: "동물에 대해 얘기해요!",
+  7: "좋아하는 영화나 드라마에 대해 얘기해요!",
+  8: "좋아하는 책에 대해 얘기해요!",
+  10: "환영합니다, 고객님!\n어떤 음식을 주문하시겠어요?",
+  11: "회의 상황을 연습해요!",
+  12: "대중교통 이용하기 연습해요!",
+  13: "물건 사기 상황을 연습해요!",
+  14: "병원 예약 및 증상 말하기를 연습해요!",
+};
+
+// fetchTopics: 목데이터 반환
+const fetchTopics = async (type: "subject" | "situation") => {
+  return new Promise<Topic[]>((resolve) => {
+    setTimeout(() => {
+      resolve(MOCK_TOPICS[type]);
+    }, 200);
+  });
+};
 
 export default function FreeChatPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -35,37 +82,9 @@ export default function FreeChatPage() {
   >(null);
   const [selectingTopics, setSelectingTopics] = useState(false);
   const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+  const [isListening, setIsListening] = useState(false);
 
-  // API: 토픽 목록 불러오기
-  const fetchTopics = async (type: "subject" | "situation") => {
-    try {
-      const res = await axiosInstance.get(`/api/freetalk/topics?type=${type}`);
-      return res.data.topics as Topic[];
-    } catch (error) {
-      console.error("토픽 목록 불러오기 실패", error);
-      throw error;
-    }
-  };
-
-  // API: 선택 주제 서버 전송
-  const postSelectedTopics = async (
-    conversationType: "subject" | "situation",
-    topicIds: number[]
-  ) => {
-    try {
-      const res = await axiosInstance.post("/api/freetalk/select-topics", {
-        conversation_type: conversationType,
-        topic_id: topicIds,
-      });
-      return res.data;
-    } catch (error) {
-      console.error("토픽 선택 전송 실패", error);
-      throw error;
-    }
-  };
-
-  // 버튼 클릭 처리
-  const handleButtonClick = async (buttonText: string) => {
+  const handleButtonClick = async (buttonId: string, buttonText: string) => {
     // 유저 메시지 추가
     setMessages((prev) => [
       ...prev,
@@ -76,13 +95,9 @@ export default function FreeChatPage() {
       },
     ]);
 
-    // 초기 선택 (상황별/주제별 대화 선택)
-    if (
-      buttonText === "상황별 대화 선택하기" ||
-      buttonText === "주제별 대화 선택하기"
-    ) {
-      const type =
-        buttonText === "상황별 대화 선택하기" ? "situation" : "subject";
+    // 첫 단계: 주제/상황 선택
+    if (buttonId === "situation" || buttonId === "subject") {
+      const type = buttonId === "situation" ? "situation" : "subject";
       setConversationType(type);
       setSelectingTopics(true);
       setSelectedTopicIds([]);
@@ -90,9 +105,7 @@ export default function FreeChatPage() {
 
       try {
         const loadedTopics = await fetchTopics(type);
-
         setTopics(loadedTopics);
-
         setMessages((prev) => [
           ...prev,
           {
@@ -100,7 +113,7 @@ export default function FreeChatPage() {
             type: "chatbot",
             text: `대화하고 싶은 ${
               type === "subject" ? "주제" : "상황"
-            }를 선택해주세요.\n(복수 선택 가능)`,
+            }를 선택해주세요.`,
           },
         ]);
       } catch {
@@ -116,68 +129,65 @@ export default function FreeChatPage() {
       return;
     }
 
-    // 토픽 선택 중일 때 토글
+    // 두 번째 단계: 토픽 선택 (선택 즉시 완료)
     if (selectingTopics && conversationType) {
-      const selectedTopic = topics.find((t) => t.content === buttonText);
-      if (!selectedTopic) return;
+      const topicIdNum = Number(buttonId);
+      if (!isNaN(topicIdNum)) {
+        // 선택된 주제 즉시 선택완료 처리
+        setSelectedTopicIds([topicIdNum]);
 
-      setSelectedTopicIds((prev) =>
-        prev.includes(selectedTopic.id)
-          ? prev.filter((id) => id !== selectedTopic.id)
-          : [...prev, selectedTopic.id]
-      );
-      return;
+        handleSelectComplete([topicIdNum]);
+      }
     }
   };
 
-  // 선택 완료 버튼 클릭 시
-  const handleSelectComplete = async () => {
-    if (!conversationType || selectedTopicIds.length === 0) {
+  // 선택완료 로직에서 선택된 ID를 인자로 받도록 변경
+  const handleSelectComplete = (selectedIds?: number[]) => {
+    const finalSelectedIds = selectedIds ?? selectedTopicIds;
+    if (!conversationType || finalSelectedIds.length === 0) {
       alert("하나 이상의 주제를 선택해주세요.");
       return;
     }
 
-    // 유저 메시지로 선택 완료 표시
-    setMessages((prev) => [
-      ...prev,
+    // 챗봇 인사말 메시지 생성
+    const greetingTexts = finalSelectedIds
+      .map((id) => GREETING_BY_TOPIC[id])
+      .filter(Boolean)
+      .join("\n");
+
+    const chatbotMsgs: Message[] = [
       {
         id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-        type: "user",
-        text: `선택 완료: ${selectedTopicIds
-          .map((id) => topics.find((t) => t.id === id)?.content)
-          .filter(Boolean)
-          .join(", ")}`,
+        type: "chatbot",
+        text: greetingTexts || "선택하신 주제로 대화를 시작합니다!",
       },
-    ]);
+    ];
 
-    try {
-      const data = await postSelectedTopics(conversationType, selectedTopicIds);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-          type: "chatbot",
-          text: data.greetingText,
-          // 필요하면 greetingAudioUrl도 활용 가능
-        },
-      ]);
-
-      // 초기화
-      setSelectingTopics(false);
-      setConversationType(null);
-      setTopics([]);
-      setSelectedTopicIds([]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-          type: "chatbot",
-          text: "주제 선택 서버 전송에 실패했습니다. 다시 시도해주세요.",
-        },
-      ]);
+    // 예시: id가 1인 경우 추가 메시지
+    if (finalSelectedIds.includes(1)) {
+      chatbotMsgs.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+        type: "chatbot",
+        text: "환영합니다, 고객님!\n어떤 음식을 주문하시겠어요?",
+      });
     }
+
+    setMessages((prev) => [...prev, ...chatbotMsgs]);
+
+    setSelectingTopics(false);
+    setConversationType(null);
+    setTopics([]);
+    setSelectedTopicIds([]);
+  };
+
+  const handleStart = () => {
+    setIsListening(true);
+    // 녹음 시작 로직 추가 가능
+  };
+
+  const handleStop = () => {
+    setIsListening(false);
+    // 녹음 종료 로직 추가 가능
   };
 
   return (
@@ -190,32 +200,38 @@ export default function FreeChatPage() {
               key={msg.id}
               text={msg.text}
               buttons={
-                // 토픽 선택 중이면 토픽 버튼 + 선택 완료 버튼 보여주기
-                selectingTopics && conversationType && topics.length > 0
-                  ? [
-                      ...topics.map((t) => ({
-                        id: t.id.toString(),
-                        text: t.content,
-                      })),
-                      { id: "complete", text: "선택 완료" },
-                    ]
-                  : msg.buttons
+                msg.buttons && msg.buttons.length > 0
+                  ? msg.buttons
+                  : selectingTopics &&
+                    conversationType &&
+                    topics.length > 0 &&
+                    msg.text.includes("선택해주세요")
+                  ? topics.map((t) => ({
+                      id: t.id.toString(),
+                      text: t.content,
+                    }))
+                  : messages[0].id === msg.id
+                  ? messages[0].buttons
+                  : []
               }
-              onButtonClick={(btnText) => {
-                if (btnText === "선택 완료") {
+              onButtonClick={(btnId, btnText) => {
+                if (btnId === "complete") {
                   handleSelectComplete();
                 } else {
-                  handleButtonClick(btnText);
+                  handleButtonClick(btnId, btnText);
                 }
               }}
-              // 선택된 버튼 스타일을 버튼 컴포넌트 쪽에서 못 주면
-              // 여기서 따로 prop으로 전달해서 표시할 수도 있습니다.
             />
           ) : (
-            <UserBubble key={msg.id} text={msg.text} />
+            <UserBubble key={msg.id} text={msg.text} color="blue" />
           )
         )}
       </div>
+      <RecorderControls
+        isListening={isListening}
+        onStart={handleStart}
+        onStop={handleStop}
+      />
     </div>
   );
 }

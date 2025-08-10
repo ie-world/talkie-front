@@ -1,11 +1,7 @@
+import React from "react";
+import { useState } from "react";
 import AIProfile from "../../../assets/images/AIProfile.svg?react";
 import Typewriter from "typewriter-effect";
-
-interface TodyBubbleProps {
-  text: string;
-  imageUrl?: string;
-  type: "picture" | "word" | "sentence";
-}
 
 const typeLabel: Record<TodyBubbleProps["type"], string> = {
   picture: "그림",
@@ -13,7 +9,16 @@ const typeLabel: Record<TodyBubbleProps["type"], string> = {
   sentence: "문장",
 };
 
-const TodyBubble = ({ text, imageUrl, type }: TodyBubbleProps) => {
+interface TodyBubbleProps {
+  text: string;
+  imageUrl?: string;
+  type: "picture" | "word" | "sentence";
+  extraText?: string;
+}
+
+const TodyBubble = ({ text, imageUrl, type, extraText }: TodyBubbleProps) => {
+  const [typingDone, setTypingDone] = useState(false);
+
   return (
     <div>
       <div className="w-full flex items-start mb-4">
@@ -31,40 +36,37 @@ const TodyBubble = ({ text, imageUrl, type }: TodyBubbleProps) => {
             <div className="text-[1rem] whitespace-pre-line mb-3">
               <Typewriter
                 options={{
-                  strings: text,
                   autoStart: true,
-                  delay: 50, // 타이핑 속도
-                  cursor: "", // 커서 제거하고 싶으면 빈 문자열
+                  delay: 50,
+                  cursor: "",
+                }}
+                onInit={(typewriter) => {
+                  setTypingDone(false);
+                  typewriter
+                    .typeString(text)
+                    .callFunction(() => setTypingDone(true))
+                    .start();
                 }}
               />
             </div>
 
-            {/* type별 렌더링 */}
-            {type === "picture" && (
-              <div className="w-[250px] h-[250px] border-2 border-dashed border-gray-300 rounded-lg flex justify-center items-center bg-white overflow-hidden">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="학습 그림"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-gray-400">[그림 삽입 영역]</span>
-                )}
+            {typingDone && type === "picture" && imageUrl && (
+              <div className="w-[250px] h-[250px]  border border-gray-300 rounded-lg flex justify-center items-center bg-white overflow-hidden">
+                <img
+                  src={imageUrl}
+                  alt="학습 그림"
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
 
-            {type === "word" && (
-              <div className="text-center text-lg font-semibold p-4 border rounded-md bg-[#F0F5FF]">
-                {text}
-              </div>
-            )}
-
-            {type === "sentence" && (
-              <div className="text-[0.9rem] italic p-2 border-l-4 border-[#005EEB] bg-[#EAF2FE]">
-                {text}
-              </div>
-            )}
+            {typingDone &&
+              (type === "word" || type === "sentence") &&
+              extraText && (
+                <div className="w-[15.625rem] h-[15.625rem] text-center flex justify-center items-center text-[1.5rem] font-semibold p-4 border border-[#E8FFD8] rounded-xl bg-[#F4FFEE]">
+                  {extraText}
+                </div>
+              )}
           </div>
 
           <div className="flex items-center gap-1 mt-1">

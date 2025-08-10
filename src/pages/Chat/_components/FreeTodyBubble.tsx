@@ -5,7 +5,7 @@ import Typewriter from "typewriter-effect";
 interface FreeTodyBubbleProps {
   text: string;
   buttons?: { id: string; text: string }[];
-  onButtonClick?: (buttonText: string) => void;
+  onButtonClick: (buttonId: string, buttonText: string) => void;
 }
 
 const FreeTodyBubble = ({
@@ -15,10 +15,13 @@ const FreeTodyBubble = ({
 }: FreeTodyBubbleProps) => {
   // 클릭된 버튼 id 상태
   const [clickedId, setClickedId] = useState<string | null>(null);
+  const [typingDone, setTypingDone] = useState(false);
 
   const handleClick = (id: string, text: string) => {
     setClickedId(id);
-    if (onButtonClick) onButtonClick(text);
+    if (onButtonClick) onButtonClick(id, text);
+    // 버튼 클릭 후 상태 초기화
+    setClickedId(null);
   };
 
   return (
@@ -37,17 +40,23 @@ const FreeTodyBubble = ({
           <div className="text-[1rem] whitespace-pre-line mb-3">
             <Typewriter
               options={{
-                strings: text,
                 autoStart: true,
                 delay: 50,
                 cursor: "",
+              }}
+              onInit={(typewriter) => {
+                setTypingDone(false);
+                typewriter
+                  .typeString(text)
+                  .callFunction(() => setTypingDone(true))
+                  .start();
               }}
             />
           </div>
         </div>
 
         {/* 버튼 (말풍선 바로 아래, 말풍선 밖) */}
-        {buttons && buttons.length > 0 && (
+        {typingDone && buttons && buttons.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2 w-[17.625rem]">
             {buttons.map((btn) => {
               const isClicked = clickedId === btn.id;
