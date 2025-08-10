@@ -4,6 +4,7 @@ type StudyType = "그림" | "단어" | "문장";
 
 interface StudyCardProps {
   type: StudyType;
+  onClick?: () => void; // 클릭 이벤트 prop 추가
 }
 
 const STUDY_CONTENT = {
@@ -24,7 +25,7 @@ const STUDY_CONTENT = {
   },
 };
 
-const StudyCard: React.FC<StudyCardProps> = ({ type }) => {
+const StudyCard: React.FC<StudyCardProps> = ({ type, onClick }) => {
   const content = STUDY_CONTENT[type];
 
   return (
@@ -39,7 +40,11 @@ const StudyCard: React.FC<StudyCardProps> = ({ type }) => {
         <div className="bg-[#EAF2FE] px-1.5 py-0.5 text-[0.75rem] rounded-md text-[#1A75FF]">
           {content.count}
         </div>
-        <button className="flex justify-center items-center text-[#1A75FF] text-[0.875rem] font-regular gap-1">
+        <button
+          onClick={onClick}
+          className="flex justify-center items-center text-[#1A75FF] text-[0.875rem] font-regular gap-1"
+          type="button"
+        >
           <div>학습하기</div>
           <ArrowBlue />
         </button>

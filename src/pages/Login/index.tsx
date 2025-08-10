@@ -4,8 +4,6 @@ import Eye from "../../assets/images/Eye.svg?react";
 import EyeOff from "../../assets/images/EyeOff.svg?react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axiosInstance from "../../apis/axios";
-import Storage from "../../utils/storage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,8 +14,7 @@ const LoginPage = () => {
   const [idError, setIdError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const handleLogin = async () => {
-    // 에러 초기화
+  const handleLogin = () => {
     setIdError("");
     setPasswordError("");
 
@@ -34,23 +31,8 @@ const LoginPage = () => {
 
     if (hasError) return;
 
-    try {
-      const response = await axiosInstance.post("/api/auth/login", {
-        username: id,
-        password: password,
-      });
-
-      const token = response.data.token;
-      if (token) {
-        Storage.setAccessToken(token);
-        alert("로그인 성공!");
-        navigate("/home");
-      } else {
-        alert("로그인에 실패했습니다. 토큰이 없습니다.");
-      }
-    } catch (error) {
-      console.log("로그인 실패:", error);
-    }
+    // API 호출 없이 바로 이동
+    navigate("/home");
   };
 
   return (
